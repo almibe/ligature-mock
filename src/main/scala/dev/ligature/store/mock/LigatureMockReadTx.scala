@@ -23,22 +23,18 @@ private class LigatureMockReadTx(private val data: Map[NamedNode, Collection]) e
   }
 
   override def allStatements(collection: NamedNode): Stream[IO, PersistedStatement] = Stream.fromIterator[IO] {
-    Iterator.empty
+    data(collection).statements.iterator
   }
 
   override def matchStatements(collection: NamedNode,
                                subject: Option[Node],
                                predicate: Option[NamedNode],
-                               `object`: Option[ligature.Object]): Stream[IO, PersistedStatement] = Stream.fromIterator[IO] {
-    Iterator.empty
-  }
+                               `object`: Option[ligature.Object]): Stream[IO, PersistedStatement] = ???
 
   override def matchStatements(collection: NamedNode,
                                subject: Option[Node],
                                predicate: Option[NamedNode],
-                               range: ligature.Range): Stream[IO, PersistedStatement] = Stream.fromIterator[IO] {
-    Iterator.empty
-  }
+                               range: ligature.Range): Stream[IO, PersistedStatement] = ???
 
   override def statementByContext(collection: NamedNode, context: AnonymousNode): IO[Option[PersistedStatement]] = IO {
     ???

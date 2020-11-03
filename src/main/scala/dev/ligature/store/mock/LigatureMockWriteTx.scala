@@ -34,7 +34,7 @@ private class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNod
     }
     val curCollection = workingCopy(collection)
     val nextId = curCollection.anonymousCounter + 1
-    workingCopy = workingCopy + (collection -> Collection(nextId, curCollection.statements))
+    workingCopy = workingCopy + (collection -> curCollection.copy(anonymousCounter = nextId))
     AnonymousNode(nextId)
   }
 
@@ -52,7 +52,15 @@ private class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNod
   }
 
   override def removeStatement(collection: NamedNode, statement: Statement): IO[Statement] = IO {
-    ???
+    if (workingCopy.keySet.contains(collection)) {
+      val curCollection: Collection = workingCopy(collection)
+      val statements = curCollection.statements
+      val nextStatements = statements.filterNot { ps =>
+        ps.statement == statement
+      }
+      workingCopy = workingCopy + (collection -> curCollection.copy(statements = nextStatements))
+    }
+    statement
   }
 
   override def cancel(): Unit = {
