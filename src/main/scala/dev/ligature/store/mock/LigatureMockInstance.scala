@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicReference
 import cats.effect.{IO, Resource}
 import dev.ligature.{LigatureInstance, LigatureReadTx, LigatureWriteTx, NamedNode}
 
-import scala.collection.immutable.HashMap
+import scala.collection.immutable.{Map, HashMap}
 
 private final case class Collection()
 

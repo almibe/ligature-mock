@@ -4,16 +4,23 @@
 
 package dev.ligature.store.mock
 
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
+import scala.collection.immutable.Map
 import cats.effect.IO
 import dev.ligature._
 
 private class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNode, Collection]]) extends LigatureWriteTx {
-  //private val workingCopy: AtomicReference[Map[NamedNode, Collection]] = new AtomicReference(data.get())
+  private val workingCopy: AtomicReference[Map[NamedNode, Collection]] = new AtomicReference(data.get())
+  private val isOpen = new AtomicBoolean(true)
 
   override def createCollection(collection: NamedNode): IO[NamedNode] = IO {
-    ???
+    val working = workingCopy.get()
+    if (!working.keySet.contains(collection)) {
+      val newWorking = working + (collection -> Collection())
+      workingCopy.set(newWorking)
+    }
+    collection
   }
 
   override def deleteCollection(collection: NamedNode): IO[NamedNode] = IO {
@@ -33,10 +40,15 @@ private class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNod
   }
 
   override def cancel(): Unit = {
-    ???
+    isOpen.set(false)
   }
 
   def close(): Unit = {
-    ???
+    if (isOpen.get()) {
+      data.set(workingCopy.get())
+      isOpen.set(false)
+    } else {
+      //do nothing
+    }
   }
 }
