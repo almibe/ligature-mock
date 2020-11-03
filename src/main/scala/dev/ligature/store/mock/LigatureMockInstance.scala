@@ -11,8 +11,6 @@ import dev.ligature.{LigatureInstance, LigatureReadTx, LigatureWriteTx, NamedNod
 
 import scala.collection.immutable.{Map, HashMap}
 
-private final case class Collection()
-
 private class LigatureMockInstance extends LigatureInstance {
   private val data: AtomicReference[Map[NamedNode, Collection]] = new AtomicReference(HashMap[NamedNode, Collection]())
 
