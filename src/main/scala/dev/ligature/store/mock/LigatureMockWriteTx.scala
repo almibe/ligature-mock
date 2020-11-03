@@ -11,28 +11,44 @@ import cats.effect.IO
 import dev.ligature._
 
 private class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNode, Collection]]) extends LigatureWriteTx {
-  private val workingCopy: AtomicReference[Map[NamedNode, Collection]] = new AtomicReference(data.get())
+  private var workingCopy: Map[NamedNode, Collection] = data.get()
   private val isOpen = new AtomicBoolean(true)
 
   override def createCollection(collection: NamedNode): IO[NamedNode] = IO {
-    val working = workingCopy.get()
-    if (!working.keySet.contains(collection)) {
-      val newWorking = working + (collection -> Collection())
-      workingCopy.set(newWorking)
+    if (!workingCopy.keySet.contains(collection)) {
+      workingCopy = workingCopy + (collection -> Collection())
     }
     collection
   }
 
   override def deleteCollection(collection: NamedNode): IO[NamedNode] = IO {
-    ???
+    if (workingCopy.keySet.contains(collection)) {
+      workingCopy = workingCopy.removed(collection)
+    }
+    collection
   }
 
   override def newNode(collection: NamedNode): IO[AnonymousNode] = IO {
-    ???
+    if (!workingCopy.keySet.contains(collection)) {
+      workingCopy = workingCopy + (collection -> Collection())
+    }
+    val curCollection = workingCopy(collection)
+    val nextId = curCollection.anonymousCounter + 1
+    workingCopy = workingCopy + (collection -> Collection(nextId, curCollection.statements))
+    AnonymousNode(nextId)
   }
 
   override def addStatement(collection: NamedNode, statement: Statement): IO[PersistedStatement] = IO {
-    ???
+    if (!workingCopy.keySet.contains(collection)) {
+      workingCopy = workingCopy + (collection -> Collection())
+    }
+    val curCollection: Collection = workingCopy(collection)
+    val nextId = curCollection.anonymousCounter + 1
+    val statements = curCollection.statements
+    val newStatement = PersistedStatement(collection, statement, AnonymousNode(nextId))
+    val nextStatements = statements + newStatement
+    workingCopy = workingCopy + (collection -> Collection(nextId, nextStatements))
+    newStatement
   }
 
   override def removeStatement(collection: NamedNode, statement: Statement): IO[Statement] = IO {
@@ -45,7 +61,7 @@ private class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNod
 
   def close(): Unit = {
     if (isOpen.get()) {
-      data.set(workingCopy.get())
+      data.set(workingCopy)
       isOpen.set(false)
     } else {
       //do nothing

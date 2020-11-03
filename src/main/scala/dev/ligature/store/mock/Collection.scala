@@ -5,7 +5,8 @@
 package dev.ligature.store.mock
 
 import dev.ligature.PersistedStatement
-import scala.collection.immutable.List
+
+import scala.collection.immutable.{HashSet, Set}
 
 private final case class Collection(anonymousCounter: Long = 0L,
-                                    statements: List[PersistedStatement] = List[PersistedStatement]())
+                                    statements: Set[PersistedStatement] = HashSet[PersistedStatement]())
