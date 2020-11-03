@@ -8,5 +8,13 @@ import cats.effect.{IO, Resource}
 import dev.ligature.{Ligature, LigatureInstance}
 
 class LigatureMock extends Ligature {
-  override def instance: Resource[IO, LigatureInstance] = ???
+  private val acquire: IO[LigatureMockInstance] = IO(new LigatureMockInstance())
+
+  private def release(session: LigatureMockInstance): IO[Unit] = {
+    IO { session.close() }
+  }
+
+  override def instance: Resource[IO, LigatureInstance] = {
+    Resource.make(acquire)(release)
+  }
 }

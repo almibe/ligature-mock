@@ -4,19 +4,39 @@
 
 package dev.ligature.store.mock
 
+import java.util.concurrent.atomic.AtomicReference
+
 import cats.effect.IO
 import dev.ligature._
 
-private class LigatureMockWriteTx extends LigatureWriteTx {
-  override def createCollection(collection: NamedNode): IO[NamedNode] = ???
+private class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNode, Collection]]) extends LigatureWriteTx {
+  //private val workingCopy: AtomicReference[Map[NamedNode, Collection]] = new AtomicReference(data.get())
 
-  override def deleteCollection(collection: NamedNode): IO[NamedNode] = ???
+  override def createCollection(collection: NamedNode): IO[NamedNode] = IO {
+    ???
+  }
 
-  override def newNode(collection: NamedNode): IO[AnonymousNode] = ???
+  override def deleteCollection(collection: NamedNode): IO[NamedNode] = IO {
+    ???
+  }
 
-  override def addStatement(collection: NamedNode, statement: Statement): IO[PersistedStatement] = ???
+  override def newNode(collection: NamedNode): IO[AnonymousNode] = IO {
+    ???
+  }
 
-  override def removeStatement(collection: NamedNode, statement: Statement): IO[Statement] = ???
+  override def addStatement(collection: NamedNode, statement: Statement): IO[PersistedStatement] = IO {
+    ???
+  }
 
-  override def cancel(): Unit = ???
+  override def removeStatement(collection: NamedNode, statement: Statement): IO[Statement] = IO {
+    ???
+  }
+
+  override def cancel(): Unit = {
+    ???
+  }
+
+  def close(): Unit = {
+    ???
+  }
 }

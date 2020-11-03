@@ -4,11 +4,30 @@
 
 package dev.ligature.store.mock
 
+import java.util.concurrent.atomic.AtomicReference
+
 import cats.effect.{IO, Resource}
-import dev.ligature.{LigatureInstance, LigatureReadTx, LigatureWriteTx}
+import dev.ligature.{LigatureInstance, LigatureReadTx, LigatureWriteTx, NamedNode}
+
+import scala.collection.immutable.HashMap
+
+private final case class Collection()
 
 private class LigatureMockInstance extends LigatureInstance {
-  override def read: Resource[IO, LigatureReadTx] = ???
+  private val data: AtomicReference[Map[NamedNode, Collection]] = new AtomicReference(HashMap[NamedNode, Collection]())
 
-  override def write: Resource[IO, LigatureWriteTx] = ???
+  def close(): Unit = { data.set(HashMap[NamedNode, Collection]()) }
+
+  private val startReadTx: IO[LigatureMockReadTx] = IO { new LigatureMockReadTx(data.get()) }
+
+  private def releaseReadTx(tx: LigatureMockReadTx): IO[Unit] = IO { tx.cancel() }
+
+  override def read: Resource[IO, LigatureReadTx] = Resource.make(startReadTx)(releaseReadTx)
+
+  private val startWriteTx: IO[LigatureMockWriteTx] = IO { new LigatureMockWriteTx(data) }
+
+  private def releaseWriteTx(tx: LigatureMockWriteTx): IO[Unit] =
+    IO { tx.close() } //close double checks if transaction has been canceled
+
+  override def write: Resource[IO, LigatureWriteTx] = Resource.make(startWriteTx)(releaseWriteTx)
 }
