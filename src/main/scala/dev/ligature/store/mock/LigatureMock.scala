@@ -7,7 +7,7 @@ package dev.ligature.store.mock
 import cats.effect.{IO, Resource}
 import dev.ligature.{Ligature, LigatureInstance}
 
-class LigatureMock extends Ligature {
+object LigatureMock extends Ligature {
   private val acquire: IO[LigatureMockInstance] = IO(new LigatureMockInstance())
 
   private def release(session: LigatureMockInstance): IO[Unit] = {
