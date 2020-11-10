@@ -9,34 +9,34 @@ import dev.ligature
 import dev.ligature._
 import fs2.Stream
 
-private class LigatureMockReadTx(private val data: Map[NamedNode, Collection]) extends LigatureReadTx {
-  override def collections: Stream[IO, NamedNode] = Stream.fromIterator[IO] {
+private class LigatureMockReadTx(private val data: Map[Dataset, InMemoryDataset]) extends LigatureReadTx {
+  override def datasets: Stream[IO, Dataset] = Stream.fromIterator[IO] {
     data.keysIterator
   }
 
-  override def collections(prefix: NamedNode): Stream[IO, NamedNode] = Stream.fromIterator[IO] {
-    data.keys.filter { collection => collection.name.startsWith(prefix.name) }.iterator
+  override def datasets(prefix: Dataset): Stream[IO, Dataset] = Stream.fromIterator[IO] {
+    data.keys.filter { dataset => dataset.name.startsWith(prefix.name) }.iterator
   }
 
-  override def collections(from: NamedNode, to: NamedNode): Stream[IO, NamedNode] = Stream.fromIterator[IO] {
-    data.keys.filter { collection => collection.name >= from.name && collection.name < to.name}.iterator
+  override def datasets(from: Dataset, to: Dataset): Stream[IO, Dataset] = Stream.fromIterator[IO] {
+    data.keys.filter { dataset => dataset.name >= from.name && dataset.name < to.name}.iterator
   }
 
-  override def allStatements(collection: NamedNode): Stream[IO, PersistedStatement] = Stream.fromIterator[IO] {
-    data(collection).statements.iterator
+  override def allStatements(dataset: Dataset): Stream[IO, PersistedStatement] = Stream.fromIterator[IO] {
+    data(dataset).statements.iterator
   }
 
-  override def matchStatements(collection: NamedNode,
+  override def matchStatements(dataset: Dataset,
                                subject: Option[Node],
                                predicate: Option[NamedNode],
                                `object`: Option[ligature.Object]): Stream[IO, PersistedStatement] = ???
 
-  override def matchStatements(collection: NamedNode,
+  override def matchStatements(dataset: Dataset,
                                subject: Option[Node],
                                predicate: Option[NamedNode],
                                range: ligature.Range): Stream[IO, PersistedStatement] = ???
 
-  override def statementByContext(collection: NamedNode, context: AnonymousNode): IO[Option[PersistedStatement]] = IO {
+  override def statementByContext(dataset: Dataset, context: AnonymousNode): IO[Option[PersistedStatement]] = IO {
     ???
   }
 

@@ -8,7 +8,5 @@ import dev.ligature.Ligature
 import dev.ligature.test.LigatureSuite
 
 class LigatureMockSuite extends LigatureSuite {
-  override def createLigature: Ligature = {
-    new LigatureMock()
-  }
+  override def createLigature: Ligature = LigatureMock
 }

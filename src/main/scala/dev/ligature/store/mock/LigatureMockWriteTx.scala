@@ -10,55 +10,55 @@ import scala.collection.immutable.Map
 import cats.effect.IO
 import dev.ligature._
 
-private class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNode, Collection]]) extends LigatureWriteTx {
-  private var workingCopy: Map[NamedNode, Collection] = data.get()
+private class LigatureMockWriteTx(private val data: AtomicReference[Map[Dataset, InMemoryDataset]]) extends LigatureWriteTx {
+  private var workingCopy: Map[Dataset, InMemoryDataset] = data.get()
   private val isOpen = new AtomicBoolean(true)
 
-  override def createCollection(collection: NamedNode): IO[NamedNode] = IO {
-    if (!workingCopy.keySet.contains(collection)) {
-      workingCopy = workingCopy + (collection -> Collection())
+  override def createDataset(dataset: Dataset): IO[Dataset] = IO {
+    if (!workingCopy.keySet.contains(dataset)) {
+      workingCopy = workingCopy + (dataset -> InMemoryDataset())
     }
-    collection
+    dataset
   }
 
-  override def deleteCollection(collection: NamedNode): IO[NamedNode] = IO {
-    if (workingCopy.keySet.contains(collection)) {
-      workingCopy = workingCopy.removed(collection)
+  override def deleteDataset(dataset: Dataset): IO[Dataset] = IO {
+    if (workingCopy.keySet.contains(dataset)) {
+      workingCopy = workingCopy.removed(dataset)
     }
-    collection
+    dataset
   }
 
-  override def newNode(collection: NamedNode): IO[AnonymousNode] = IO {
-    if (!workingCopy.keySet.contains(collection)) {
-      workingCopy = workingCopy + (collection -> Collection())
+  override def newNode(dataset: Dataset): IO[AnonymousNode] = IO {
+    if (!workingCopy.keySet.contains(dataset)) {
+      workingCopy = workingCopy + (dataset -> InMemoryDataset())
     }
-    val curCollection = workingCopy(collection)
+    val curCollection = workingCopy(dataset)
     val nextId = curCollection.anonymousCounter + 1
-    workingCopy = workingCopy + (collection -> curCollection.copy(anonymousCounter = nextId))
+    workingCopy = workingCopy + (dataset -> curCollection.copy(anonymousCounter = nextId))
     AnonymousNode(nextId)
   }
 
-  override def addStatement(collection: NamedNode, statement: Statement): IO[PersistedStatement] = IO {
-    if (!workingCopy.keySet.contains(collection)) {
-      workingCopy = workingCopy + (collection -> Collection())
+  override def addStatement(dataset: Dataset, statement: Statement): IO[PersistedStatement] = IO {
+    if (!workingCopy.keySet.contains(dataset)) {
+      workingCopy = workingCopy + (dataset -> InMemoryDataset())
     }
-    val curCollection: Collection = workingCopy(collection)
+    val curCollection: InMemoryDataset = workingCopy(dataset)
     val nextId = curCollection.anonymousCounter + 1
     val statements = curCollection.statements
-    val newStatement = PersistedStatement(collection, statement, AnonymousNode(nextId))
+    val newStatement = PersistedStatement(dataset, statement, AnonymousNode(nextId))
     val nextStatements = statements + newStatement
-    workingCopy = workingCopy + (collection -> Collection(nextId, nextStatements))
+    workingCopy = workingCopy + (dataset -> InMemoryDataset(nextId, nextStatements))
     newStatement
   }
 
-  override def removeStatement(collection: NamedNode, statement: Statement): IO[Statement] = IO {
-    if (workingCopy.keySet.contains(collection)) {
-      val curCollection: Collection = workingCopy(collection)
+  override def removeStatement(dataset: Dataset, statement: Statement): IO[Statement] = IO {
+    if (workingCopy.keySet.contains(dataset)) {
+      val curCollection: InMemoryDataset = workingCopy(dataset)
       val statements = curCollection.statements
       val nextStatements = statements.filterNot { ps =>
         ps.statement == statement
       }
-      workingCopy = workingCopy + (collection -> curCollection.copy(statements = nextStatements))
+      workingCopy = workingCopy + (dataset -> curCollection.copy(statements = nextStatements))
     }
     statement
   }

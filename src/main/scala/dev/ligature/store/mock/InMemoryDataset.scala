@@ -8,5 +8,5 @@ import dev.ligature.PersistedStatement
 
 import scala.collection.immutable.{HashSet, Set}
 
-private final case class Collection(anonymousCounter: Long = 0L,
-                                    statements: Set[PersistedStatement] = HashSet[PersistedStatement]())
+private final case class InMemoryDataset(anonymousCounter: Long = 0L,
+                                         statements: Set[PersistedStatement] = HashSet[PersistedStatement]())

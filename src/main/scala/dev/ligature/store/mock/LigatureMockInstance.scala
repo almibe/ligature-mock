@@ -7,14 +7,14 @@ package dev.ligature.store.mock
 import java.util.concurrent.atomic.AtomicReference
 
 import cats.effect.{IO, Resource}
-import dev.ligature.{LigatureInstance, LigatureReadTx, LigatureWriteTx, NamedNode}
+import dev.ligature.{Dataset, LigatureInstance, LigatureReadTx, LigatureWriteTx}
 
-import scala.collection.immutable.{Map, HashMap}
+import scala.collection.immutable.{HashMap, Map}
 
 private class LigatureMockInstance extends LigatureInstance {
-  private val data: AtomicReference[Map[NamedNode, Collection]] = new AtomicReference(HashMap[NamedNode, Collection]())
+  private val data: AtomicReference[Map[Dataset, InMemoryDataset]] = new AtomicReference(HashMap[Dataset, InMemoryDataset]())
 
-  def close(): Unit = { data.set(HashMap[NamedNode, Collection]()) }
+  def close(): Unit = { data.set(HashMap[Dataset, InMemoryDataset]()) }
 
   private val startReadTx: IO[LigatureMockReadTx] = IO { new LigatureMockReadTx(data.get()) }
 
