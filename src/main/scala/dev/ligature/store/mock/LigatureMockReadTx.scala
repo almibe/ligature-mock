@@ -4,39 +4,36 @@
 
 package dev.ligature.store.mock
 
-import cats.effect.IO
 import dev.ligature
 import dev.ligature._
-import fs2.Stream
+import monix.reactive.Observable
+import monix.eval.Task
 
-private class LigatureMockReadTx(private val data: Map[Dataset, InMemoryDataset]) extends LigatureReadTx {
-  override def datasets: Stream[IO, Dataset] = Stream.fromIterator[IO] {
-    data.keysIterator
-  }
+private final class LigatureMockReadTx(private val data: Map[NamedNode, InMemoryDataset]) extends LigatureReadTx {
+  override def datasets: Observable[NamedNode] = Observable.fromIterable(data.keySet)
 
-  override def datasets(prefix: Dataset): Stream[IO, Dataset] = Stream.fromIterator[IO] {
-    data.keys.filter { dataset => dataset.name.startsWith(prefix.name) }.iterator
-  }
+  override def datasets(prefix: NamedNode): Observable[NamedNode] =
+    Observable.fromIterable(data.keys.filter
+    { dataset => dataset.name.startsWith(prefix.name) })
 
-  override def datasets(from: Dataset, to: Dataset): Stream[IO, Dataset] = Stream.fromIterator[IO] {
-    data.keys.filter { dataset => dataset.name >= from.name && dataset.name < to.name}.iterator
-  }
+  override def datasets(from: NamedNode, to: NamedNode): Observable[NamedNode] =
+    Observable.fromIterable(data.keys.filter
+    { dataset => dataset.name >= from.name && dataset.name < to.name})
 
-  override def allStatements(dataset: Dataset): Stream[IO, PersistedStatement] = Stream.fromIterator[IO] {
-    data(dataset).statements.iterator
-  }
+  override def allStatements(dataset: NamedNode): Observable[PersistedStatement] =
+    Observable.fromIterable(data(dataset).statements)
 
-  override def matchStatements(dataset: Dataset,
+  override def matchStatements(dataset: NamedNode,
                                subject: Option[Node],
                                predicate: Option[NamedNode],
-                               `object`: Option[ligature.Object]): Stream[IO, PersistedStatement] = ???
+                               `object`: Option[ligature.Object]): Observable[PersistedStatement] = ???
 
-  override def matchStatements(dataset: Dataset,
+  override def matchStatements(dataset: NamedNode,
                                subject: Option[Node],
                                predicate: Option[NamedNode],
-                               range: ligature.Range): Stream[IO, PersistedStatement] = ???
+                               range: ligature.Range): Observable[PersistedStatement] = ???
 
-  override def statementByContext(dataset: Dataset, context: AnonymousNode): IO[Option[PersistedStatement]] = IO {
+  override def statementByContext(dataset: NamedNode, context: AnonymousNode): Task[Option[PersistedStatement]] = Task {
     ???
   }
 

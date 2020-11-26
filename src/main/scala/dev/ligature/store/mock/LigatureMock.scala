@@ -4,17 +4,18 @@
 
 package dev.ligature.store.mock
 
-import cats.effect.{IO, Resource}
+import cats.effect.Resource
 import dev.ligature.{Ligature, LigatureInstance}
+import monix.eval.Task
 
 object LigatureMock extends Ligature {
-  private val acquire: IO[LigatureMockInstance] = IO(new LigatureMockInstance())
+  private val acquire: Task[LigatureMockInstance] = Task(new LigatureMockInstance())
 
-  private def release(session: LigatureMockInstance): IO[Unit] = {
-    IO { session.close() }
+  private def release(session: LigatureMockInstance): Task[Unit] = {
+    Task { session.close() }
   }
 
-  override def instance: Resource[IO, LigatureInstance] = {
+  override def instance: Resource[Task, LigatureInstance] = {
     Resource.make(acquire)(release)
   }
 }

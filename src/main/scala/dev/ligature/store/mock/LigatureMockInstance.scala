@@ -6,26 +6,27 @@ package dev.ligature.store.mock
 
 import java.util.concurrent.atomic.AtomicReference
 
-import cats.effect.{IO, Resource}
-import dev.ligature.{Dataset, LigatureInstance, LigatureReadTx, LigatureWriteTx}
+import cats.effect.Resource
+import dev.ligature.{LigatureInstance, LigatureReadTx, LigatureWriteTx, NamedNode}
+import monix.eval.Task
 
 import scala.collection.immutable.{HashMap, Map}
 
-private class LigatureMockInstance extends LigatureInstance {
-  private val data: AtomicReference[Map[Dataset, InMemoryDataset]] = new AtomicReference(HashMap[Dataset, InMemoryDataset]())
+private final class LigatureMockInstance extends LigatureInstance {
+  private val data: AtomicReference[Map[NamedNode, InMemoryDataset]] = new AtomicReference(HashMap[NamedNode, InMemoryDataset]())
 
-  def close(): Unit = { data.set(HashMap[Dataset, InMemoryDataset]()) }
+  def close(): Unit = { data.set(HashMap[NamedNode, InMemoryDataset]()) }
 
-  private val startReadTx: IO[LigatureMockReadTx] = IO { new LigatureMockReadTx(data.get()) }
+  private val startReadTx: Task[LigatureMockReadTx] = Task { new LigatureMockReadTx(data.get()) }
 
-  private def releaseReadTx(tx: LigatureMockReadTx): IO[Unit] = IO { tx.cancel() }
+  private def releaseReadTx(tx: LigatureMockReadTx): Task[Unit] = Task { tx.cancel() }
 
-  override def read: Resource[IO, LigatureReadTx] = Resource.make(startReadTx)(releaseReadTx)
+  override def read: Resource[Task, LigatureReadTx] = Resource.make(startReadTx)(releaseReadTx)
 
-  private val startWriteTx: IO[LigatureMockWriteTx] = IO { new LigatureMockWriteTx(data) }
+  private val startWriteTx: Task[LigatureMockWriteTx] = Task { new LigatureMockWriteTx(data) }
 
-  private def releaseWriteTx(tx: LigatureMockWriteTx): IO[Unit] =
-    IO { tx.close() } //close double checks if transaction has been canceled
+  private def releaseWriteTx(tx: LigatureMockWriteTx): Task[Unit] =
+    Task { tx.close() } //close double checks if transaction has been canceled
 
-  override def write: Resource[IO, LigatureWriteTx] = Resource.make(startWriteTx)(releaseWriteTx)
+  override def write: Resource[Task, LigatureWriteTx] = Resource.make(startWriteTx)(releaseWriteTx)
 }

@@ -7,6 +7,6 @@ package dev.ligature.store.mock
 import dev.ligature.Ligature
 import dev.ligature.test.LigatureSuite
 
-class LigatureMockSuite extends LigatureSuite {
+final class LigatureMockSuite extends LigatureSuite {
   override def createLigature: Ligature = LigatureMock
 }

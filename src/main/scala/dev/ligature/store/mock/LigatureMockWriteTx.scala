@@ -7,28 +7,28 @@ package dev.ligature.store.mock
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 
 import scala.collection.immutable.Map
-import cats.effect.IO
 import dev.ligature._
+import monix.eval.Task
 
-private class LigatureMockWriteTx(private val data: AtomicReference[Map[Dataset, InMemoryDataset]]) extends LigatureWriteTx {
-  private var workingCopy: Map[Dataset, InMemoryDataset] = data.get()
+private final class LigatureMockWriteTx(private val data: AtomicReference[Map[NamedNode, InMemoryDataset]]) extends LigatureWriteTx {
+  private var workingCopy: Map[NamedNode, InMemoryDataset] = data.get()
   private val isOpen = new AtomicBoolean(true)
 
-  override def createDataset(dataset: Dataset): IO[Dataset] = IO {
+  override def createDataset(dataset: NamedNode): Task[NamedNode] = Task {
     if (!workingCopy.keySet.contains(dataset)) {
       workingCopy = workingCopy + (dataset -> InMemoryDataset())
     }
     dataset
   }
 
-  override def deleteDataset(dataset: Dataset): IO[Dataset] = IO {
+  override def deleteDataset(dataset: NamedNode): Task[NamedNode] = Task {
     if (workingCopy.keySet.contains(dataset)) {
       workingCopy = workingCopy.removed(dataset)
     }
     dataset
   }
 
-  override def newNode(dataset: Dataset): IO[AnonymousNode] = IO {
+  override def newNode(dataset: NamedNode): Task[AnonymousNode] = Task {
     if (!workingCopy.keySet.contains(dataset)) {
       workingCopy = workingCopy + (dataset -> InMemoryDataset())
     }
@@ -38,7 +38,7 @@ private class LigatureMockWriteTx(private val data: AtomicReference[Map[Dataset,
     AnonymousNode(nextId)
   }
 
-  override def addStatement(dataset: Dataset, statement: Statement): IO[PersistedStatement] = IO {
+  override def addStatement(dataset: NamedNode, statement: Statement): Task[PersistedStatement] = Task {
     if (!workingCopy.keySet.contains(dataset)) {
       workingCopy = workingCopy + (dataset -> InMemoryDataset())
     }
@@ -51,7 +51,7 @@ private class LigatureMockWriteTx(private val data: AtomicReference[Map[Dataset,
     newStatement
   }
 
-  override def removeStatement(dataset: Dataset, statement: Statement): IO[Statement] = IO {
+  override def removeStatement(dataset: NamedNode, statement: Statement): Task[Statement] = Task {
     if (workingCopy.keySet.contains(dataset)) {
       val curCollection: InMemoryDataset = workingCopy(dataset)
       val statements = curCollection.statements
