@@ -1,3 +1,9 @@
 target/
 .idea
 _site
+.bsp/
+.metals/
+project/project/
+.vscode/
+project/metals.sbt
+project/.bloop/ligature-mock-build.json

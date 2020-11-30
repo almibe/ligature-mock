@@ -9,31 +9,31 @@ import dev.ligature._
 import monix.reactive.Observable
 import monix.eval.Task
 
-private final class LigatureMockReadTx(private val data: Map[NamedNode, InMemoryDataset]) extends LigatureReadTx {
-  override def datasets: Observable[NamedNode] = Observable.fromIterable(data.keySet)
+private final class LigatureMockReadTx(private val data: Map[IRI, InMemoryDataset]) extends LigatureReadTx {
+  override def datasets: Observable[IRI] = Observable.fromIterable(data.keySet)
 
-  override def datasets(prefix: NamedNode): Observable[NamedNode] =
+  override def datasets(prefix: String): Observable[IRI] =
     Observable.fromIterable(data.keys.filter
     { dataset => dataset.name.startsWith(prefix.name) })
 
-  override def datasets(from: NamedNode, to: NamedNode): Observable[NamedNode] =
+  override def datasets(from: String, to: String): Observable[IRI] =
     Observable.fromIterable(data.keys.filter
     { dataset => dataset.name >= from.name && dataset.name < to.name})
 
-  override def allStatements(dataset: NamedNode): Observable[PersistedStatement] =
+  override def allStatements(dataset: IRI): Observable[PersistedStatement] =
     Observable.fromIterable(data(dataset).statements)
 
-  override def matchStatements(dataset: NamedNode,
-                               subject: Option[Node],
-                               predicate: Option[NamedNode],
-                               `object`: Option[ligature.Object]): Observable[PersistedStatement] = ???
+  override def matchStatements(dataset: IRI,
+                               subject: Option[Subject],
+                               predicate: Option[IRI],
+                               `object`: Option[Object]): Observable[PersistedStatement] = ???
 
-  override def matchStatements(dataset: NamedNode,
-                               subject: Option[Node],
-                               predicate: Option[NamedNode],
-                               range: ligature.Range): Observable[PersistedStatement] = ???
+  override def matchStatements(dataset: IRI,
+                               subject: Option[Subject],
+                               predicate: Option[IRI],
+                               range: Range): Observable[PersistedStatement] = ???
 
-  override def statementByContext(dataset: NamedNode, context: AnonymousNode): Task[Option[PersistedStatement]] = Task {
+  override def statementByContext(dataset: IRI, context: BlankNode): Task[Option[PersistedStatement]] = Task {
     ???
   }
 
