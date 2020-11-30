@@ -6,6 +6,7 @@ package dev.ligature.store.mock
 
 import dev.ligature
 import dev.ligature._
+import dev.ligature.iris.IRI
 import monix.reactive.Observable
 import monix.eval.Task
 
@@ -14,11 +15,11 @@ private final class LigatureMockReadTx(private val data: Map[IRI, InMemoryDatase
 
   override def datasets(prefix: String): Observable[IRI] =
     Observable.fromIterable(data.keys.filter
-    { dataset => dataset.name.startsWith(prefix.name) })
+    { dataset => dataset.value.startsWith(prefix) })
 
   override def datasets(from: String, to: String): Observable[IRI] =
     Observable.fromIterable(data.keys.filter
-    { dataset => dataset.name >= from.name && dataset.name < to.name})
+    { dataset => dataset.value >= from && dataset.value < to})
 
   override def allStatements(dataset: IRI): Observable[PersistedStatement] =
     Observable.fromIterable(data(dataset).statements)
