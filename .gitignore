@@ -7,3 +7,9 @@ project/project/
 .vscode/
 project/metals.sbt
 project/.bloop/ligature-mock-build.json
+
+
+# Added by cargo
+
+/target
+Cargo.lock
