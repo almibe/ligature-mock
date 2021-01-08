@@ -2,50 +2,50 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use ligature::{DatasetName, Ligature, LigatureError, QueryTx, WriteTx};
+use ligature::{Dataset, Ligature, LigatureError, QueryTx, WriteTx};
 
 pub struct LigatureMock {
-    datasets: Vec<DatasetName>,
+    datasets: Vec<Dataset>,
 }
 
 impl LigatureMock {
     pub fn new() -> LigatureMock {
         LigatureMock {
-            datasets: Vec::new(),
+            datasets: vec!(),
         }
     }
 }
 
 impl Ligature for LigatureMock {
-    fn all_datasets(&self) -> Box<dyn Iterator<Item = DatasetName>> {
+    fn all_datasets(&self) -> Box<dyn Iterator<Item = Dataset>> {
         Box::from(std::iter::empty())
     }
 
-    fn match_datasets(&self, prefix: String) -> Box<dyn Iterator<Item = DatasetName>> {
+    fn match_datasets(&self, prefix: &str) -> Box<dyn Iterator<Item = Dataset>> {
         Box::from(std::iter::empty())
     }
 
     fn match_datasets_range(
         &self,
-        from: String,
-        to: String,
-    ) -> Box<dyn Iterator<Item = DatasetName>> {
+        from: &str,
+        to: &str,
+    ) -> Box<dyn Iterator<Item = Dataset>> {
         Box::from(std::iter::empty())
     }
 
-    fn create_dataset(&self, dataset: DatasetName) -> Result<(), LigatureError> {
+    fn create_dataset(&self, dataset: Dataset) -> Result<(), LigatureError> {
         todo!()
     }
 
-    fn delete_dataset(&self, dataset: DatasetName) -> Result<(), LigatureError> {
+    fn delete_dataset(&self, dataset: Dataset) -> Result<(), LigatureError> {
         todo!()
     }
 
-    fn query(&self, dataset: DatasetName) -> Result<Box<dyn QueryTx>, LigatureError> {
+    fn query(&self, dataset: Dataset) -> Result<Box<dyn QueryTx>, LigatureError> {
         todo!()
     }
 
-    fn write(&self, dataset: DatasetName) -> Result<Box<dyn WriteTx>, LigatureError> {
+    fn write(&self, dataset: Dataset) -> Result<Box<dyn WriteTx>, LigatureError> {
         todo!()
     }
 }
