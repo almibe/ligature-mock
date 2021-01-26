@@ -126,7 +126,7 @@ struct LigatureMockQueryTx {
 
 impl QueryTx for LigatureMockQueryTx {
     fn all_statements(&self) -> Box<dyn Iterator<Item = Statement>> {
-        todo!()
+        Box::new(self.dataset.clone().iter().cloned())
     }
 
     fn sparql_query(&self, query: String) -> Result<QueryResult, LigatureError> {
