@@ -2,15 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#[macro_use] extern crate lazy_static;
-
 #[cfg(test)]
 mod tests {
-    use ligature::{Dataset, Ligature};
+    use ligature::{Dataset, Ligature, Statement};
     use ligature_mock::LigatureMock;
 
-    fn testDataset() -> Dataset {
-        Dataset::new("test/test").expect("")
+    /// Dumb helper function
+    fn dataset(name: &str) -> Dataset {
+        Dataset::new(name).expect("")
     }
 
     #[test]
@@ -22,32 +21,30 @@ mod tests {
 
     #[test]
     fn creating_a_new_dataset() {
-        let instance = LigatureMock::new();
-        instance.create_dataset(Dataset::new("test/test").expect(""));
+        let mut instance = LigatureMock::new();
+        instance.create_dataset(dataset("test/test"));
         let res: Vec<Dataset> = instance.all_datasets().collect();
-        assert_eq!(res, vec![testDataset()]);
+        assert_eq!(res, vec![dataset("test/test")]);
     }
 
     #[test]
     fn access_and_delete_new_dataset() {
-        let instance = LigatureMock::new();
-        instance.create_dataset(testDataset());
-        instance.delete_dataset(testDataset());
-        instance.delete_dataset(Dataset::new("http://localhost/test2").expect(""));
+        let mut instance = LigatureMock::new();
+        instance.create_dataset(dataset("test/test"));
+        instance.delete_dataset(dataset("test/test"));
+        instance.delete_dataset(dataset("test/test2"));
         let res: Vec<Dataset> = instance.all_datasets().collect();
         assert!(res.is_empty());
     }
 
-    // #[test]
-    // fn new_datasets_should_be_empty() {
-    //     let instance = LigatureMock::new();
-    //     let write_tx = instance.write();
-    //     write_tx.createDataset(testDataset);
-    //     write_tx.commit();
-    //     let read_tx = instance.query();
-    //     let res = read_tx.allStatements(testDataset).toListL;
-    //     assert(res.isEmpty)
-    // }
+    #[test]
+    fn new_datasets_should_be_empty() {
+        let instance = LigatureMock::new();
+        instance.create_dataset(dataset("test/test"));
+        let read_tx = instance.query(dataset("test/test")).unwrap();
+        let res: Vec<Statement> = read_tx.all_statements().collect();
+        assert!(res.is_empty());
+    }
 
     // #[test]
     // fn new_blank_node() {
@@ -62,7 +59,7 @@ mod tests {
     //     write_tx.commit();
     //     let read_tx = instance.query();
     //     let res = read_tx.allStatements(testDataset).toListL;
-    //     assertEquals(
+    //     assert_equals!(
     //         res.map, /*{ _.statement }*/
     //         Set(
     //             Statement(BlankNode(1), a, BlankNode(2)),
@@ -85,7 +82,7 @@ mod tests {
     //         .allStatements(testDataset)
     //         .map /*{ _.statement }*/
     //         .toListL;
-    //     assertEquals(
+    //     assert_equals!(
     //         res,
     //         Set(
     //             Statement(BlankNode(1), a, BlankNode(2)),
@@ -113,7 +110,7 @@ mod tests {
     //           _.statement
     //         }*/
     //         .toListL;
-    //     assertEquals(res, Set(Statement(BlankNode(3), a, BlankNode(2))));
+    //     assert_equals!(res, Set(Statement(BlankNode(3), a, BlankNode(2))));
     // }
 
     //   #[test]

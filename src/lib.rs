@@ -2,47 +2,117 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use ligature::{Dataset, Ligature, LigatureError, QueryTx, WriteTx};
+use ligature::{
+    BlankNode, Dataset, Ligature, LigatureError, QueryResult, QueryTx, Statement, WriteTx,
+};
+use std::cell::RefCell;
+use std::collections::BTreeMap;
+use std::sync::RwLock;
+
+#[derive(Debug, Clone)]
+struct Store {
+    datasets: BTreeMap<Dataset, Vec<Statement>>,
+    cntr: u64,
+}
+
+impl Store {
+    fn new() -> Store {
+        Store {
+            datasets: BTreeMap::new(),
+            cntr: 0,
+        }
+    }
+}
 
 pub struct LigatureMock {
-    datasets: Vec<Dataset>,
+    store: RwLock<RefCell<Store>>,
 }
 
 impl LigatureMock {
     pub fn new() -> LigatureMock {
         LigatureMock {
-            datasets: vec!(),
+            store: RwLock::new(RefCell::new(Store::new())),
         }
     }
 }
 
 impl Ligature for LigatureMock {
     fn all_datasets(&self) -> Box<dyn Iterator<Item = Dataset>> {
-        Box::from(std::iter::empty())
+        let v: Vec<Dataset> = self
+            .store
+            .read()
+            .unwrap()
+            .borrow()
+            .datasets
+            .keys()
+            .cloned()
+            .collect();
+        Box::from(v.into_iter())
     }
 
     fn match_datasets(&self, prefix: &str) -> Box<dyn Iterator<Item = Dataset>> {
-        Box::from(std::iter::empty())
+        //TODO needs to match prefix only
+        let v: Vec<Dataset> = self
+            .store
+            .read()
+            .unwrap()
+            .borrow()
+            .datasets
+            .keys()
+            .cloned()
+            .collect();
+        Box::from(v.into_iter())
     }
 
-    fn match_datasets_range(
-        &self,
-        from: &str,
-        to: &str,
-    ) -> Box<dyn Iterator<Item = Dataset>> {
-        Box::from(std::iter::empty())
+    fn match_datasets_range(&self, from: &str, to: &str) -> Box<dyn Iterator<Item = Dataset>> {
+        //TODO needs to match range only
+        let v: Vec<Dataset> = self
+            .store
+            .read()
+            .unwrap()
+            .borrow()
+            .datasets
+            .keys()
+            .cloned()
+            .collect();
+        Box::from(v.into_iter())
     }
 
     fn create_dataset(&self, dataset: Dataset) -> Result<(), LigatureError> {
-        todo!()
+        self.store
+            .write()
+            .unwrap()
+            .borrow_mut()
+            .datasets
+            .insert(dataset, Vec::new());
+        Ok(())
     }
 
     fn delete_dataset(&self, dataset: Dataset) -> Result<(), LigatureError> {
-        todo!()
+        self.store
+            .write()
+            .unwrap()
+            .borrow_mut()
+            .datasets
+            .remove(&dataset);
+        Ok(())
     }
 
     fn query(&self, dataset: Dataset) -> Result<Box<dyn QueryTx>, LigatureError> {
-        todo!()
+        let t = self
+            .store
+            .read()
+            .unwrap();
+        let tt = t
+            .borrow();
+        let dataset_copy = tt
+            .datasets
+            .get(&dataset)
+            .clone()
+            .ok_or_else(|| LigatureError(format!("Dataset {} does not exist.", dataset.name())))?;
+        Ok(Box::new(LigatureMockQueryTx {
+            dataset: dataset_copy.to_vec(),
+        }))
     }
 
     fn write(&self, dataset: Dataset) -> Result<Box<dyn WriteTx>, LigatureError> {
@@ -50,72 +120,49 @@ impl Ligature for LigatureMock {
     }
 }
 
-// object LigatureMock extends Ligature {
-//   private val acquire: Task[LigatureMockInstance] = Task(new LigatureMockInstance())
+struct LigatureMockQueryTx {
+    dataset: Vec<Statement>,
+}
 
-//   private def release(session: LigatureMockInstance): Task[Unit] = {
-//     Task { session.close() }
-//   }
+impl QueryTx for LigatureMockQueryTx {
+    fn all_statements(&self) -> Box<dyn Iterator<Item = Statement>> {
+        todo!()
+    }
 
-//   override def instance: Resource[Task, LigatureInstance] = {
-//     Resource.make(acquire)(release)
-//   }
-// }
+    fn sparql_query(&self, query: String) -> Result<QueryResult, LigatureError> {
+        todo!()
+    }
 
-// private final case class InMemoryDataset(anonymousCounter: Long = 0L,
-//     statements: Set[PersistedStatement] = HashSet[PersistedStatement]())
+    fn wander_query(&self, query: String) -> Result<QueryResult, LigatureError> {
+        todo!()
+    }
+}
 
-//     private final class LigatureMockInstance extends LigatureInstance {
-//         private val data: AtomicReference[Map[IRI, InMemoryDataset]] = new AtomicReference(HashMap[IRI, InMemoryDataset]())
+struct LigatureMockWriteTx {
+    store: RefCell<Store>,
+}
 
-//         def close(): Unit = { data.set(HashMap[IRI, InMemoryDataset]()) }
+impl WriteTx for LigatureMockWriteTx {
+    fn new_blank_node(&self) -> Result<BlankNode, LigatureError> {
+        todo!()
+    }
 
-//         private val startReadTx: Task[LigatureMockReadTx] = Task { new LigatureMockReadTx(data.get()) }
+    fn add_statement(&self, statement: Statement) -> Result<Statement, LigatureError> {
+        todo!()
+    }
 
-//         private def releaseReadTx(tx: LigatureMockReadTx): Task[Unit] = Task { tx.cancel() }
+    fn remove_statement(&self, statement: Statement) -> Result<Statement, LigatureError> {
+        todo!()
+    }
 
-//         override def read: Resource[Task, LigatureReadTx] = Resource.make(startReadTx)(releaseReadTx)
+    fn cancel(&self) -> Result<(), LigatureError> {
+        todo!()
+    }
 
-//         private val startWriteTx: Task[LigatureMockWriteTx] = Task { new LigatureMockWriteTx(data) }
-
-//         private def releaseWriteTx(tx: LigatureMockWriteTx): Task[Unit] =
-//           Task { tx.close() } //close double checks if transaction has been canceled
-
-//         override def write: Resource[Task, LigatureWriteTx] = Resource.make(startWriteTx)(releaseWriteTx)
-// }
-
-// private final class LigatureMockReadTx(private val data: Map[IRI, InMemoryDataset]) extends LigatureReadTx {
-//     override def datasets: Observable[IRI] = Observable.fromIterable(data.keySet)
-
-//     override def datasets(prefix: String): Observable[IRI] =
-//       Observable.fromIterable(data.keys.filter
-//       { dataset => dataset.value.startsWith(prefix) })
-
-//     override def datasets(from: String, to: String): Observable[IRI] =
-//       Observable.fromIterable(data.keys.filter
-//       { dataset => dataset.value >= from && dataset.value < to})
-
-//     override def allStatements(dataset: IRI): Observable[PersistedStatement] =
-//       Observable.fromIterable(data(dataset).statements)
-
-//     override def matchStatements(dataset: IRI,
-//                                  subject: Option[Subject],
-//                                  predicate: Option[IRI],
-//                                  `object`: Option[Object]): Observable[PersistedStatement] = ???
-
-//     override def matchStatements(dataset: IRI,
-//                                  subject: Option[Subject],
-//                                  predicate: Option[IRI],
-//                                  range: Range): Observable[PersistedStatement] = ???
-
-//     override def statementByContext(dataset: IRI, context: BlankNode): Task[Option[PersistedStatement]] = Task {
-//       ???
-//     }
-
-//     def cancel(): Unit = {
-//       //do nothing
-//     }
-//   }
+    fn commit(&self) -> Result<(), LigatureError> {
+        todo!()
+    }
+}
 
 //   private final class LigatureMockWriteTx(private val data: AtomicReference[Map[IRI, InMemoryDataset]]) extends LigatureWriteTx {
 //     private var workingCopy: Map[IRI, InMemoryDataset] = data.get()
@@ -145,14 +192,14 @@ impl Ligature for LigatureMock {
 //       BlankNode(nextId)
 //     }
 
-//     override def addStatement(dataset: IRI, statement: Statement): Task[PersistedStatement] = Task {
+//     override def addStatement(dataset: IRI, statement: Statement): Task[Statement] = Task {
 //       if (!workingCopy.keySet.contains(dataset)) {
 //         workingCopy = workingCopy + (dataset -> InMemoryDataset())
 //       }
 //       val curCollection: InMemoryDataset = workingCopy(dataset)
 //       val nextId = curCollection.anonymousCounter + 1
 //       val statements = curCollection.statements
-//       val newStatement = PersistedStatement(dataset, statement, BlankNode(nextId))
+//       val newStatement = Statement(dataset, statement, BlankNode(nextId))
 //       val nextStatements = statements + newStatement
 //       workingCopy = workingCopy + (dataset -> InMemoryDataset(nextId, nextStatements))
 //       newStatement

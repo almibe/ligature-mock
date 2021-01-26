@@ -6,8 +6,8 @@ A painfully simple (yet working) implementation of [Ligature](https://github.com
  * Simplicity - this project should be easy to understand so that the more complex implementations can reference it
 
 ## Non-Goals
- * Performance - there's a lot of linear scans used for the sake of simplicity
- * Persistence
+ * Performance - there's a lot of clones used for the sake of simplicity
+ * Persistence - this is in memory only
 
 ## Building
 TODO.
